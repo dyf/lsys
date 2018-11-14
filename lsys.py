@@ -31,8 +31,8 @@ class State2D(State):
     def turn_transform(self, angle):
         r = angle * np.pi / 180.0
 
-        m = np.array([ [ np.cos(r), np.sin(r) ],
-                       [ -np.sin(r), np.cos(r) ] ])        
+        return np.array([ [ np.cos(r), -np.sin(r) ],
+                          [ np.sin(r), np.cos(r) ] ])        
 
 class State3D(State):
     def __init__(self, p=None, v=None, u=None):
@@ -57,7 +57,7 @@ class State3D(State):
 
 class Turtle:
     def __init__(self):
-        self.state = State3D()
+        self.state = State2D()
 
         self.segs = []
 
@@ -164,8 +164,8 @@ def fern():
 
     actions = {
         'F': ( 'draw', 1 ),
-        '-': ( 'turn', 25 ),
-        '+': ( 'turn', -25 ),
+        '-': ( 'turn', -25 ),
+        '+': ( 'turn', 25 ),
         '[': ( 'push', ),
         ']': ( 'pop', )
     }
