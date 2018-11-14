@@ -135,13 +135,13 @@ def koch():
 
     actions = {
         'F': ( 'draw', 1 ),
-        '+': ( 'turn', -90 ),
-        '-': ( 'turn', 90 )
+        '+': ( 'turn', 90 ),
+        '-': ( 'turn', -90 )
     }
 
     return LSystem('F', rules, actions)
 
-def sierpinski():
+def sierpinski_triangle():
     rules = {
         'F': 'F-G+F+G-F',
         'G': 'GG'
@@ -150,11 +150,26 @@ def sierpinski():
     actions = {
         'F': ( 'draw', 1 ),
         'G': ( 'draw', 1 ),
-        '+': ( 'turn', 120 ),
-        '-': ( 'turn', -120 )
+        '+': ( 'turn', -120 ),
+        '-': ( 'turn', 120 )
     }
 
     return LSystem('F-G-G', rules, actions)
+
+def sierpinski_arrowhead():
+    rules = {
+        'A': 'B-A-B',
+        'B': 'A+B+A'
+    }
+
+    actions = {
+        'A': ( 'draw', 1 ),
+        'B': ( 'draw', 1 ),
+        '+': ( 'turn', -60 ),
+        '-': ( 'turn', 60 )
+    }
+
+    return LSystem('A', rules, actions)
 
 def fern():
     rules = {
@@ -173,7 +188,7 @@ def fern():
     return LSystem('X', rules, actions)
     
 def main():
-    lsys = fern()
+    lsys = sierpinski_arrowhead()
     lsys.expand(7)
     turtle = lsys.render()
     turtle.plot()
