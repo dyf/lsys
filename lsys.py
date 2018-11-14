@@ -6,28 +6,58 @@ import matplotlib.collections as mc
 import matplotlib.pyplot as plt
 
 class State:
-    def __init__(self, p, v):
-        self.p = np.array(p)
-        self.v = np.array(v)
-
     def copy(self):
-        return State(p=self.p.copy(),
-                     v=self.v.copy())
+        raise NotImplementedError()
 
+    def turn_transform(self):
+        raise NotImplementedError()        
+    
     def move(self, mag):
         self.p += self.v*mag
 
     def turn(self, angle):
-        r = angle * np.pi / 180.0
-        m = np.array([ [ np.cos(r), np.sin(r) ],
-                       [ -np.sin(r), np.cos(r) ] ])
-        
+        m = self.turn_transform(angle)
         self.v = np.dot(m, self.v)
+        
+class State2D(State):
+    def __init__(self, p=None, v=None):
+        self.p = p if p is not None else np.array([0.0,0.0])
+        self.v = v if v is not None else np.array([1.0,0.0])
+
+    def copy(self):
+        return State2D(p=self.p.copy(),
+                       v=self.v.copy())
+    
+    def turn_transform(self, angle):
+        r = angle * np.pi / 180.0
+
+        m = np.array([ [ np.cos(r), np.sin(r) ],
+                       [ -np.sin(r), np.cos(r) ] ])        
+
+class State3D(State):
+    def __init__(self, p=None, v=None, u=None):
+        self.p = p if p is not None else np.array([0.0, 0.0, 0.0])
+        self.v = v if v is not None else np.array([1.0, 0.0, 0.0])
+        self.u = u if u is not None else np.array([0.0, 0.0, 1.0])
+
+    def copy(self):
+        return State3D(p=self.p.copy(),
+                       v=self.v.copy(),
+                       u=self.u.copy())
+    
+    def turn_transform(self, angle):
+        th = angle * np.pi / 180.0
+        cth = np.cos(th)
+        sth = np.sin(th)
+        u = self.u
+        
+        return np.array([ [ cth + u[0]*u[0]*(1-cth),      u[0]*u[1]*(1-cth) - u[2]*sth,  u[0]*u[2]*(1-cth) + u[1]*sth ],
+                          [ u[1]*u[0]*(1-cth) + u[2]*sth, cth + u[1]*u[1]*(1-cth),       u[1]*u[2]*(1-cth) - u[0]*sth ],
+                          [ u[2]*u[0]*(1-cth) - u[1]*sth, u[2]*u[1]*(1-cth) + u[0]*sth,  cth + u[2]*u[2]*(1-cth) ] ])
 
 class Turtle:
     def __init__(self):
-        self.state = State(p=[0.0,0.0],
-                           v=[1.0,0.0])
+        self.state = State3D()
 
         self.segs = []
 
@@ -48,7 +78,8 @@ class Turtle:
         self.state.turn(angle)
 
     def plot(self):
-        segs = np.array(self.segs)
+        segs = np.array(self.segs)[:,:,:2]
+        
         lc = mc.LineCollection(segs, linewidth=2)
         fig, ax = plt.subplots()
         ax.set_xlim(segs[:,:,0].min(axis=None)-1,
