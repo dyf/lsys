@@ -87,6 +87,7 @@ class Turtle:
         ax.set_ylim(segs[:,:,1].min(axis=None)-1,
                     segs[:,:,1].max(axis=None)+1)
         ax.add_collection(lc)
+        plt.axis('off')
         plt.show()
         
     
@@ -188,7 +189,7 @@ def fern():
     return LSystem('X', rules, actions)
     
 def main():
-    lsys = sierpinski_arrowhead()
+    lsys = fern()
     lsys.expand(7)
     turtle = lsys.render()
     turtle.plot()
