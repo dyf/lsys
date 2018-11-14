@@ -7,13 +7,27 @@ import matplotlib.pyplot as plt
 
 class State:
     def __init__(self, p, v):
-        self.p = p
-        self.v = v
+        self.p = np.array(p)
+        self.v = np.array(v)
+
+    def copy(self):
+        return State(p=self.p.copy(),
+                     v=self.v.copy())
+
+    def move(self, mag):
+        self.p += self.v*mag
+
+    def turn(self, angle):
+        r = angle * np.pi / 180.0
+        m = np.array([ [ np.cos(r), np.sin(r) ],
+                       [ -np.sin(r), np.cos(r) ] ])
+        
+        self.v = np.dot(m, self.v)
 
 class Turtle:
     def __init__(self):
-        self.p = np.array([0.0,0.0])
-        self.v = np.array([1.0,0.0])
+        self.state = State(p=[0.0,0.0],
+                           v=[1.0,0.0])
 
         self.segs = []
 
@@ -21,21 +35,17 @@ class Turtle:
         fn = getattr(self, action)(*args, **kwargs)
         
     def draw(self, mag):
-        p0 = self.p.copy()
+        p0 = self.state.p.copy()
         self.move(mag)
-        p1 = self.p.copy()
+        p1 = self.state.p.copy()
         
         self.segs.append([p0,p1])
         
     def move(self, mag):
-        self.p += self.v*mag
+        self.state.move(mag)
         
     def turn(self, angle):
-        r = angle * np.pi / 180.0
-        m = np.array([ [ np.cos(r), np.sin(r) ],
-                       [ -np.sin(r), np.cos(r) ] ])
-        
-        self.v = np.dot(m, self.v)
+        self.state.turn(angle)
 
     def plot(self):
         segs = np.array(self.segs)
@@ -79,12 +89,9 @@ class LSystem:
 
             if action:
                 if action[0] == 'push':
-                    stack.append([turtle.p.copy(),
-                                  turtle.v.copy()])
+                    stack.append(turtle.state.copy())
                 elif action[0] == 'pop':
-                    p,v = stack.pop()
-                    turtle.p = p
-                    turtle.v = v
+                    turtle.state = stack.pop()
                 else:
                     turtle.go(*action)
 
