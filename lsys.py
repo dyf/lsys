@@ -8,13 +8,20 @@ import numpy as np
 import matplotlib.collections as mc
 import matplotlib.pyplot as plt
 
-class State:
-    def copy(self):
-        raise NotImplementedError()
+class Turtle:
+    def __init__(self):
+        self.segs = []
 
-    def turn_transform(self):
-        raise NotImplementedError()        
-    
+    def go(self, action, *args, **kwargs):
+        return getattr(self, action)(*args, **kwargs)
+
+    def draw(self, mag, std=0):
+        p0 = self.p.copy()
+        self.move(mag, std)
+        p1 = self.p.copy()
+        
+        self.segs.append([p0,p1])
+
     def move(self, mag, std=0):
         if std > 0:
             mag = np.random.normal(mag, std)
@@ -26,16 +33,34 @@ class State:
             angle = np.random.normal(angle, std)
             
         m = self.turn_transform(angle)
-        self.v = np.dot(m, self.v)
+        self.v = np.dot(m, self.v)        
         
-class State2D(State):
+    def spin(self, angle, std=0):
+        raise NotImplementedError()
+
+    def copy(self):
+        raise NotImplementedError()
+
+    def turn_transform(self):
+        raise NotImplementedError()
+
+    def get_state(self):
+        raise NotImplementedError()
+
+    def set_state():
+        raise NotImplementedError()
+    
+
+class Turtle2D(Turtle):
     def __init__(self, p=None, v=None):
+        super().__init__()
+        
         self.p = p if p is not None else np.array([0.0,0.0])
         self.v = v if v is not None else np.array([1.0,0.0])
 
     def copy(self):
-        return State2D(p=self.p.copy(),
-                       v=self.v.copy())
+        return Turtle2D(p=self.p.copy(),
+                        v=self.v.copy())
     
     def turn_transform(self, angle):
         r = angle * np.pi / 180.0
@@ -43,17 +68,38 @@ class State2D(State):
         return np.array([ [ np.cos(r), -np.sin(r) ],
                           [ np.sin(r), np.cos(r) ] ])
 
-class State3D(State):
+    def plot(self):
+        segs = np.array(self.segs)
+
+        lc = mc.LineCollection(segs, linewidth=2)
+
+        fig, ax = plt.subplots()
+
+        ax.add_collection(lc)
+            
+        ax.set_xlim(segs[:,:,0].min(axis=None)-1,
+                    segs[:,:,0].max(axis=None)+1)
+        ax.set_ylim(segs[:,:,1].min(axis=None)-1,
+                    segs[:,:,1].max(axis=None)+1)
+
+        #plt.axis('off')
+        plt.show()
+
+    def get_state(self):
+        return self.p.copy(), self.v.copy()
+
+    def set_state(self, p, v):
+        self.p, self.v = p, v
+        
+    
+class Turtle3D(Turtle):
     def __init__(self, p=None, v=None, u=None):
+        super().__init__()
+        
         self.p = p if p is not None else np.array([0.0, 0.0, 0.0])
         self.v = v if v is not None else np.array([1.0, 0.0, 0.0])
         self.u = u if u is not None else np.array([0.0, 0.0, 1.0])
 
-    def copy(self):
-        return State3D(p=self.p.copy(),
-                       v=self.v.copy(),
-                       u=self.u.copy())
-    
     def turn_transform(self, angle, u=None):
         th = angle * np.pi / 180.0
         cth = np.cos(th)
@@ -73,62 +119,36 @@ class State3D(State):
         m = self.turn_transform(angle)
         self.u = np.dot(m, self.v)
 
-
-class Turtle:
-    def __init__(self, state_class=State2D):
-        self.state = state_class()
-
-        self.segs = []
-
-    def go(self, action, *args, **kwargs):
-        fn = getattr(self, action)(*args, **kwargs)
-        
-    def draw(self, mag, std=0):
-        p0 = self.state.p.copy()
-        self.move(mag, std)
-        p1 = self.state.p.copy()
-        
-        self.segs.append([p0,p1])
-        
-    def move(self, mag, std=0):
-        self.state.move(mag, std)
-        
-    def turn(self, angle, std=0):
-        self.state.turn(angle, std)
-
-    def spin(self, angle, std=0):
-        self.state.spin(angle, std)
+    def copy(self):
+        return Turtle3D(p=self.p.copy(),
+                        v=self.v.copy(),
+                        u=self.u.copy())    
 
     def plot(self):
         segs = np.array(self.segs)
 
-        is3d = segs.shape[2] == 3
-
-        if is3d:
-            lc = Line3DCollection(segs, linewidth=2)
-
-            fig = plt.figure()            
-            ax = fig.gca(projection='3d')
-
-            ax.add_collection3d(lc)
-        else:
-            lc = mc.LineCollection(segs, linewidth=2)
-
-            fig, ax = plt.subplots()
-
-            ax.add_collection(lc)
+        lc = Line3DCollection(segs, linewidth=2)
+        
+        fig = plt.figure()            
+        ax = fig.gca(projection='3d')
+        
+        ax.add_collection3d(lc)
             
         ax.set_xlim(segs[:,:,0].min(axis=None)-1,
                     segs[:,:,0].max(axis=None)+1)
         ax.set_ylim(segs[:,:,1].min(axis=None)-1,
                     segs[:,:,1].max(axis=None)+1)
-
-        if is3d:
-            ax.set_zlim(segs[:,:,2].min(axis=None)-1,
-                        segs[:,:,2].max(axis=None)+1)
+        ax.set_zlim(segs[:,:,2].min(axis=None)-1,
+                    segs[:,:,2].max(axis=None)+1)
             
         #plt.axis('off')
         plt.show()
+
+    def get_state(self):
+        return self.p.copy(), self.v.copy(), self.u.copy()
+
+    def set_state(self, p, v, u):
+        self.p, self.v, self.u = p, v, u
         
     
 class LSystem:
@@ -138,9 +158,9 @@ class LSystem:
         self.actions = actions
 
         if dims == 2:
-            self.state_class = State2D
+            self.turtle_class = Turtle2D
         elif dims == 3:
-            self.state_class = State3D
+            self.turtle_class = Turtle3D
 
     def expand(self, N=1):
 
@@ -159,16 +179,16 @@ class LSystem:
     def render(self):
         stack = []
 
-        turtle = Turtle(state_class=self.state_class)
+        turtle = self.turtle_class()
         
         for element in self.axiom:
             action = self.actions.get(element, None)
 
             if action:
                 if action[0] == 'push':
-                    stack.append(turtle.state.copy())
+                    stack.append(turtle.get_state())
                 elif action[0] == 'pop':
-                    turtle.state = stack.pop()
+                    turtle.set_state(*stack.pop())
                 else:
                     turtle.go(*action)
 
@@ -261,7 +281,7 @@ LIBRARY = dict(
 )
     
 def main():
-    lsys = LSystem(**LIBRARY['spintree'])
+    lsys = LSystem(**LIBRARY['koch'])
     
     lsys.expand(6)
     turtle = lsys.render()
