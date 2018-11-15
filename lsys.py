@@ -51,11 +51,13 @@ class State3D(State):
                        v=self.v.copy(),
                        u=self.u.copy())
     
-    def turn_transform(self, angle):
+    def turn_transform(self, angle, u=None):
         th = angle * np.pi / 180.0
         cth = np.cos(th)
         sth = np.sin(th)
-        u = self.u
+
+        if u is None:
+            u = self.u
         
         return np.array([ [ cth + u[0]*u[0]*(1-cth),      u[0]*u[1]*(1-cth) - u[2]*sth,  u[0]*u[2]*(1-cth) + u[1]*sth ],
                           [ u[1]*u[0]*(1-cth) + u[2]*sth, cth + u[1]*u[1]*(1-cth),       u[1]*u[2]*(1-cth) - u[0]*sth ],
@@ -66,7 +68,7 @@ class State3D(State):
             angle = np.random.normal(angle, std)
             
         m = self.turn_transform(angle)
-        self.u = np.dot(m, self.u)
+        self.u = np.dot(m, self.v)
 
 
 class Turtle:
@@ -90,6 +92,9 @@ class Turtle:
         
     def turn(self, angle, std=0):
         self.state.turn(angle, std)
+
+    def spin(self, angle, std=0):
+        self.state.spin(angle, std)
 
     def plot(self):
         segs = np.array(self.segs)[:,:,:2]
@@ -215,13 +220,29 @@ LIBRARY = dict(
         },
         axiom = 'A',
         dims = 3
-    )
+    ),
+    spintree = dict(
+        rules = {
+            'A': 'B[[-A][<-A][<<-A]]',
+            'B': 'BB'
+        },
+        actions = {
+            'A': ( 'draw', 1 ),
+            'B': ( 'draw', 1 ),
+            '[': ( 'push', ),
+            ']': ( 'pop', ),
+            '<': ( 'spin', 120 ),
+            '-': ( 'turn', -30 ),
+        },
+        axiom = 'A',
+        dims = 3
+    ),
 )
     
 def main():
-    lsys = LSystem(**LIBRARY['tritree'])
+    lsys = LSystem(**LIBRARY['spintree'])
     
-    lsys.expand(10)
+    lsys.expand(6)
     turtle = lsys.render()
     turtle.plot()
     plt.savefig('test.png')
