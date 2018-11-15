@@ -38,7 +38,7 @@ class State2D(State):
         r = angle * np.pi / 180.0
 
         return np.array([ [ np.cos(r), -np.sin(r) ],
-                          [ np.sin(r), np.cos(r) ] ])        
+                          [ np.sin(r), np.cos(r) ] ])
 
 class State3D(State):
     def __init__(self, p=None, v=None, u=None):
@@ -61,9 +61,17 @@ class State3D(State):
                           [ u[1]*u[0]*(1-cth) + u[2]*sth, cth + u[1]*u[1]*(1-cth),       u[1]*u[2]*(1-cth) - u[0]*sth ],
                           [ u[2]*u[0]*(1-cth) - u[1]*sth, u[2]*u[1]*(1-cth) + u[0]*sth,  cth + u[2]*u[2]*(1-cth) ] ])
 
+    def spin(self, angle, std=0):
+        if std > 0:
+            angle = np.random.normal(angle, std)
+            
+        m = self.turn_transform(angle)
+        self.u = np.dot(m, self.u)
+
+
 class Turtle:
-    def __init__(self):
-        self.state = State2D()
+    def __init__(self, state_class=State2D):
+        self.state = state_class()
 
         self.segs = []
 
@@ -98,10 +106,15 @@ class Turtle:
         
     
 class LSystem:
-    def __init__(self, axiom, rules, actions):
+    def __init__(self, axiom, rules, actions, dims=2):
         self.axiom = axiom
         self.rules = rules
         self.actions = actions
+
+        if dims == 2:
+            self.state_class = State2D
+        elif dims == 3:
+            self.state_class = State3D
 
     def expand(self, N=1):
 
@@ -120,7 +133,7 @@ class LSystem:
     def render(self):
         stack = []
 
-        turtle = Turtle()
+        turtle = Turtle(state_class=self.state_class)
         
         for element in self.axiom:
             action = self.actions.get(element, None)
@@ -200,7 +213,8 @@ LIBRARY = dict(
             '+': ( 'turn', 30, 3 ),
             '-': ( 'turn', -30, 3 ),
         },
-        axiom = 'A'
+        axiom = 'A',
+        dims = 3
     )
 )
     
