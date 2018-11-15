@@ -1,6 +1,9 @@
 import matplotlib
 matplotlib.use('agg')
 
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Line3DCollection
+
 import numpy as np
 import matplotlib.collections as mc
 import matplotlib.pyplot as plt
@@ -97,16 +100,34 @@ class Turtle:
         self.state.spin(angle, std)
 
     def plot(self):
-        segs = np.array(self.segs)[:,:,:2]
-        
-        lc = mc.LineCollection(segs, linewidth=2)
-        fig, ax = plt.subplots()
+        segs = np.array(self.segs)
+
+        is3d = segs.shape[2] == 3
+
+        if is3d:
+            lc = Line3DCollection(segs, linewidth=2)
+
+            fig = plt.figure()            
+            ax = fig.gca(projection='3d')
+
+            ax.add_collection3d(lc)
+        else:
+            lc = mc.LineCollection(segs, linewidth=2)
+
+            fig, ax = plt.subplots()
+
+            ax.add_collection(lc)
+            
         ax.set_xlim(segs[:,:,0].min(axis=None)-1,
                     segs[:,:,0].max(axis=None)+1)
         ax.set_ylim(segs[:,:,1].min(axis=None)-1,
                     segs[:,:,1].max(axis=None)+1)
-        ax.add_collection(lc)
-        plt.axis('off')
+
+        if is3d:
+            ax.set_zlim(segs[:,:,2].min(axis=None)-1,
+                        segs[:,:,2].max(axis=None)+1)
+            
+        #plt.axis('off')
         plt.show()
         
     
