@@ -1,5 +1,5 @@
-import matplotlib
-matplotlib.use('agg')
+#import matplotlib
+#matplotlib.use('agg')
 
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Line3DCollection
@@ -127,7 +127,7 @@ class Turtle3D(Turtle):
     def plot(self):
         segs = np.array(self.segs)
 
-        lc = Line3DCollection(segs, linewidth=2)
+        lc = Line3DCollection(segs, linewidths=0.6, alpha=0.4)
         
         fig = plt.figure()            
         ax = fig.gca(projection='3d')
@@ -141,7 +141,7 @@ class Turtle3D(Turtle):
         ax.set_zlim(segs[:,:,2].min(axis=None)-1,
                     segs[:,:,2].max(axis=None)+1)
             
-        #plt.axis('off')
+        plt.axis('off')
         plt.show()
 
     def get_state(self):
@@ -262,18 +262,18 @@ LIBRARY = dict(
         axiom = 'A',
         dims = 3
     ),
-    spintree = dict(
+    pentabroccoli = dict(
         rules = {
-            'A': 'B[[-A][<-A][<<-A]]',
+            'A': 'B[[-A][<-A][<<-A][<<<-A][<<<<-A]]',
             'B': 'BB'
         },
         actions = {
-            'A': ( 'draw', 1 ),
-            'B': ( 'draw', 1 ),
+            'A': ( 'draw', 1, .02 ),
+            'B': ( 'draw', .5, .02 ),
             '[': ( 'push', ),
             ']': ( 'pop', ),
-            '<': ( 'spin', 120 ),
-            '-': ( 'turn', -30 ),
+            '<': ( 'spin', 72, 0 ),
+            '-': ( 'turn', -30, 3),
         },
         axiom = 'A',
         dims = 3
@@ -281,7 +281,7 @@ LIBRARY = dict(
 )
     
 def main():
-    lsys = LSystem(**LIBRARY['koch'])
+    lsys = LSystem(**LIBRARY['pentabroccoli'])
     
     lsys.expand(6)
     turtle = lsys.render()
