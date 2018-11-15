@@ -12,10 +12,16 @@ class State:
     def turn_transform(self):
         raise NotImplementedError()        
     
-    def move(self, mag):
+    def move(self, mag, std=0):
+        if std > 0:
+            mag = np.random.normal(mag, std)
+            
         self.p += self.v*mag
 
-    def turn(self, angle):
+    def turn(self, angle, std=0):
+        if std > 0:
+            angle = np.random.normal(angle, std)
+            
         m = self.turn_transform(angle)
         self.v = np.dot(m, self.v)
         
@@ -64,18 +70,18 @@ class Turtle:
     def go(self, action, *args, **kwargs):
         fn = getattr(self, action)(*args, **kwargs)
         
-    def draw(self, mag):
+    def draw(self, mag, std=0):
         p0 = self.state.p.copy()
-        self.move(mag)
+        self.move(mag, std)
         p1 = self.state.p.copy()
         
         self.segs.append([p0,p1])
         
-    def move(self, mag):
-        self.state.move(mag)
+    def move(self, mag, std=0):
+        self.state.move(mag, std)
         
-    def turn(self, angle):
-        self.state.turn(angle)
+    def turn(self, angle, std=0):
+        self.state.turn(angle, std)
 
     def plot(self):
         segs = np.array(self.segs)[:,:,:2]
@@ -129,68 +135,79 @@ class LSystem:
 
         return turtle
 
-def koch():
-    rules = {
-        'F': 'F+F-F-F+F'
-    }
-
-    actions = {
-        'F': ( 'draw', 1 ),
-        '+': ( 'turn', 90 ),
-        '-': ( 'turn', -90 )
-    }
-
-    return LSystem('F', rules, actions)
-
-def sierpinski_triangle():
-    rules = {
-        'F': 'F-G+F+G-F',
-        'G': 'GG'
-    }
-
-    actions = {
-        'F': ( 'draw', 1 ),
-        'G': ( 'draw', 1 ),
-        '+': ( 'turn', -120 ),
-        '-': ( 'turn', 120 )
-    }
-
-    return LSystem('F-G-G', rules, actions)
-
-def sierpinski_arrowhead():
-    rules = {
-        'A': 'B-A-B',
-        'B': 'A+B+A'
-    }
-
-    actions = {
-        'A': ( 'draw', 1 ),
-        'B': ( 'draw', 1 ),
-        '+': ( 'turn', -60 ),
-        '-': ( 'turn', 60 )
-    }
-
-    return LSystem('A', rules, actions)
-
-def fern():
-    rules = {
-        'X': 'F+[[X]-X]-F[-FX]+X',
-        'F': 'FF'
-    }
-
-    actions = {
-        'F': ( 'draw', 1 ),
-        '-': ( 'turn', -25 ),
-        '+': ( 'turn', 25 ),
-        '[': ( 'push', ),
-        ']': ( 'pop', )
-    }
-
-    return LSystem('X', rules, actions)
+LIBRARY = dict(
+    koch = dict(
+        rules = {
+            'F': 'F+F-F-F+F'
+        },
+        actions = {
+            'F': ( 'draw', 1 ),
+            '+': ( 'turn', 90 ),
+            '-': ( 'turn', -90 )
+        },
+        axiom = 'F'
+    ),
+    sierpinski_triangle = dict(
+        rules = {
+            'F': 'F-G+F+G-F',
+            'G': 'GG'
+        },
+        actions = {
+            'F': ( 'draw', 1 ),
+            'G': ( 'draw', 1 ),
+            '+': ( 'turn', -120 ),
+            '-': ( 'turn', 120 )
+        },
+        axiom = 'F-G-G'
+    ),
+    sierpinski_arrowhead = dict(
+        rules = {
+            'A': 'B-A-B',
+            'B': 'A+B+A'
+        },
+        actions = {
+            'A': ( 'draw', 1 ),
+            'B': ( 'draw', 1 ),
+            '+': ( 'turn', -60 ),
+            '-': ( 'turn', 60 )
+        },
+        axiom = 'A'
+    ),
+    fern = dict(
+        rules = {
+            'X': 'F+[[X]-X]-F[-FX]+X',
+            'F': 'FF'
+        },
+        actions = {
+            'F': ( 'draw', 1 ),
+            '-': ( 'turn', -25 ),
+            '+': ( 'turn', 25 ),
+            '[': ( 'push', ),
+            ']': ( 'pop', )
+        },
+        axiom = 'X'
+    ),
+    tritree = dict(
+        rules = {
+            'A': 'B[[-A][A][+A]]',
+            'B': 'BB'
+        },
+        actions = {
+            'A': ( 'draw', .2, 0.02 ),
+            'B': ( 'draw', 1, 0.1 ),
+            '[': ( 'push', ),
+            ']': ( 'pop', ),
+            '+': ( 'turn', 30, 3 ),
+            '-': ( 'turn', -30, 3 ),
+        },
+        axiom = 'A'
+    )
+)
     
 def main():
-    lsys = fern()
-    lsys.expand(7)
+    lsys = LSystem(**LIBRARY['tritree'])
+    
+    lsys.expand(10)
     turtle = lsys.render()
     turtle.plot()
     plt.savefig('test.png')
